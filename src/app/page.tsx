@@ -54,7 +54,7 @@ export default async function HomePage() {
   }));
 
   const liveMatchRaw = enrichedMatches.find(m => ["LIVE", "TOSS", "INNINGS_BREAK"].includes(m.status));
-  let liveMatch = liveMatchRaw ? { ...liveMatchRaw, score: { totalRuns: 0, wickets: 0, oversStr: "0.0", crr: "0.00" } } : null;
+  let liveMatch = liveMatchRaw ? { ...liveMatchRaw, score: { totalRuns: 0, wickets: 0, oversStr: "0.0", crr: "0.00", recentBalls: [] as any[] } } : null;
 
   if (liveMatch && liveMatch.status === "LIVE") {
     const innings = liveMatch.currentInnings || 1;

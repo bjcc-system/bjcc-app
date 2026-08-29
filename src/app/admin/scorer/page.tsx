@@ -18,7 +18,7 @@ export default async function ScorerPage() {
     .where(ne(matches.status, "COMPLETED"));
 
   const allTeams = await db.select().from(teams);
-  const teamMap = new Map(allTeams.map((t) => [t.id, { name: t.name, initials: t.initials }]));
+  const teamMap = new Map(allTeams.map((t) => [t.id, t]));
 
   // Enrich matches with team names
   const enrichedMatches = activeMatches.map((m) => ({
@@ -61,12 +61,26 @@ export default async function ScorerPage() {
       if (b.extraType !== "WIDE" && b.extraType !== "NO_BALL") legalBalls++;
     }
 
+    const recentBalls = await db
+      .select()
+      .from(balls)
+      .where(
+        and(
+          eq(balls.matchId, liveMatch.id),
+          eq(balls.innings, innings),
+          eq(balls.isUndone, false)
+        )
+      )
+      .orderBy(desc(balls.timestamp))
+      .limit(10);
+
     score = {
       totalRuns,
       wickets,
       legalBalls,
       oversStr: `${Math.floor(legalBalls / 6)}.${legalBalls % 6}`,
       crr: legalBalls > 0 ? ((totalRuns / legalBalls) * 6).toFixed(2) : "0.00",
+      recentBalls: recentBalls.reverse(),
     };
   }
 

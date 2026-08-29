@@ -53,6 +53,7 @@ type Score = {
   oversStr: string;
   crr: string;
   legalBalls: number;
+  recentBalls?: any[];
 };
 
 export default function ScorerClient({
@@ -175,7 +176,7 @@ export default function ScorerClient({
               <div className="text-2xl font-bold tabular-nums">{score.oversStr}</div>
             </div>
           </div>
-          <div className="flex items-center gap-4 text-xs">
+          <div className="flex items-center gap-4 text-xs mt-3">
             <span className="text-muted-foreground">
               CRR: <span className="text-foreground font-medium">{score.crr}</span>
             </span>
@@ -188,6 +189,37 @@ export default function ScorerClient({
               </>
             )}
           </div>
+          
+          {score.recentBalls && score.recentBalls.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-red-500/10">
+              <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">This Over</div>
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                {score.recentBalls.map((b: any) => {
+                  const isBoundary = b.runs === 4 || b.runs === 6;
+                  const isWicket = b.isWicket;
+                  const isExtra = b.extras > 0;
+                  
+                  let display = b.runs.toString();
+                  if (isWicket) display = "W";
+                  else if (b.extraType === "WIDE") display = `${b.extras}wd`;
+                  else if (b.extraType === "NO_BALL") display = `${b.runs}nb`;
+                  else if (b.runs === 0) display = "•";
+
+                  return (
+                    <div 
+                      key={b.id} 
+                      className={`min-w-[28px] h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0
+                        ${isWicket ? 'bg-red-500 text-white' : 
+                          isBoundary ? 'bg-emerald-500 text-white' : 
+                          isExtra ? 'bg-amber-500/20 text-amber-500' : 'bg-muted text-muted-foreground'}`}
+                    >
+                      {display}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
