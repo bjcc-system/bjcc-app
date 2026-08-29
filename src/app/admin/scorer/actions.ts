@@ -255,18 +255,30 @@ export async function endMatch(formData: FormData) {
   const score1 = await calcScore(matchId, 1);
   const score2 = await calcScore(matchId, 2);
 
-  let winnerId: string | null = null;
-  let resultDesc = "";
+  const { teams } = await import("@/lib/db/schema");
+  const team1List = await db.select().from(teams).where(eq(teams.id, m.team1Id)).limit(1);
+  const team2List = await db.select().from(teams).where(eq(teams.id, m.team2Id)).limit(1);
+  
+  const team1Obj = team1List[0];
+  const team2Obj = team2List[0];
 
   const battingFirstId = m.battingFirstId || m.team1Id;
   const battingSecondId = battingFirstId === m.team1Id ? m.team2Id : m.team1Id;
+  
+  const teamBattingFirst = battingFirstId === m.team1Id ? team1Obj : team2Obj;
+  const teamBattingSecond = battingSecondId === m.team1Id ? team1Obj : team2Obj;
 
-  if (score1.totalRuns > score2.totalRuns) {
-    winnerId = battingFirstId;
-    resultDesc = `Won by ${score1.totalRuns - score2.totalRuns} runs`;
-  } else if (score2.totalRuns > score1.totalRuns) {
+  let winnerId: string | null = null;
+  let resultDesc = "";
+
+  if (score2.totalRuns > score1.totalRuns) {
+    const wicketsLeft = 10 - score2.wickets;
+    resultDesc = `${teamBattingSecond?.name || "Team"} won by ${wicketsLeft} wickets`;
     winnerId = battingSecondId;
-    resultDesc = `Won by ${10 - score2.wickets} wickets`;
+  } else if (score1.totalRuns > score2.totalRuns) {
+    const runsDiff = score1.totalRuns - score2.totalRuns;
+    resultDesc = `${teamBattingFirst?.name || "Team"} won by ${runsDiff} runs`;
+    winnerId = battingFirstId;
   } else {
     resultDesc = "Match Tied";
   }

@@ -6,7 +6,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Calendar, Bell, Shield, ChevronRight, Activity, MapPin } from "lucide-react";
-import { LiveScorecard } from "@/components/LiveScorecard";
+import { HomeMatchesUI } from "@/components/HomeMatchesUI";
 
 export const dynamic = "force-dynamic";
 
@@ -148,42 +148,8 @@ export default async function HomePage() {
           )}
         </div>
 
-        {/* LIVE MATCH */}
-        <LiveScorecard initialLiveMatch={liveMatch} />
-
-        {/* LAST MATCH */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <Trophy className="h-4 w-4" /> Last Match
-            </h2>
-          </div>
-          {lastMatch ? (
-            <Card className="bg-card/40 backdrop-blur-sm border-border/50">
-              <CardContent className="p-4">
-                <div className="text-[10px] text-muted-foreground mb-3 text-center">
-                  {lastMatch.tournamentName || "Normal Match"} • {lastMatch.date || "Recently"}
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-bold">{lastMatch.team1?.name}</div>
-                  <div className="text-xs text-muted-foreground">VS</div>
-                  <div className="text-sm font-bold">{lastMatch.team2?.name}</div>
-                </div>
-                <div className="mt-3 pt-3 border-t border-border/50 text-center">
-                  <span className="text-xs font-medium text-emerald-400">
-                    {lastMatch.resultDesc}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="bg-muted/10 border-border/50 border-dashed">
-              <CardContent className="p-6 text-center text-xs text-muted-foreground">
-                No recent matches found.
-              </CardContent>
-            </Card>
-          )}
-        </div>
+        {/* LIVE MATCH & LAST MATCH */}
+        <HomeMatchesUI initialLiveMatch={liveMatch} initialLastMatch={lastMatch} />
 
         {/* UPCOMING MATCHES */}
         <div className="space-y-3">

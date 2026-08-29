@@ -82,8 +82,29 @@ export async function GET() {
       score,
     };
 
-    return NextResponse.json({ liveMatch });
+    // 5. Fetch last match
+    const lastMatches = await db
+      .select()
+      .from(matches)
+      .where(eq(matches.status, "COMPLETED"))
+      .orderBy(desc(matches.createdAt))
+      .limit(1);
+    
+    let lastMatch = null;
+    if (lastMatches[0]) {
+      const lm = lastMatches[0];
+      const lmTeam1List = await db.select().from(teams).where(eq(teams.id, lm.team1Id)).limit(1);
+      const lmTeam2List = await db.select().from(teams).where(eq(teams.id, lm.team2Id)).limit(1);
+      lastMatch = {
+        ...lm,
+        team1: lmTeam1List[0],
+        team2: lmTeam2List[0],
+        tournamentName: lm.tournamentId ? allTournaments.find(t => t.id === lm.tournamentId)?.name : null,
+      };
+    }
+
+    return NextResponse.json({ liveMatch, lastMatch });
   } catch (error) {
-    return NextResponse.json({ liveMatch: null, error: "Failed to fetch live score" }, { status: 500 });
+    return NextResponse.json({ liveMatch: null, lastMatch: null, error: "Failed to fetch matches" }, { status: 500 });
   }
 }
