@@ -6,7 +6,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Calendar, Bell, Shield, ChevronRight, Activity, MapPin } from "lucide-react";
-import { HomeMatchesUI } from "@/components/HomeMatchesUI";
+import { HomeRealtimeFeed } from "@/components/HomeRealtimeFeed";
 
 export const dynamic = "force-dynamic";
 
@@ -148,65 +148,13 @@ export default async function HomePage() {
           )}
         </div>
 
-        {/* LIVE MATCH & LAST MATCH */}
-        <HomeMatchesUI initialLiveMatch={liveMatch} initialLastMatch={lastMatch} />
-
-        {/* UPCOMING MATCHES */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <Calendar className="h-4 w-4" /> Upcoming
-            </h2>
-            <Link href="/matches" className="text-xs text-primary hover:underline flex items-center">
-              View All <ChevronRight className="h-3 w-3" />
-            </Link>
-          </div>
-          {upcomingMatches.length > 0 ? (
-            <div className="grid gap-2">
-              {upcomingMatches.map(m => (
-                <Card key={m.id} className="bg-muted/10 border-border/50">
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-sm uppercase tracking-wider">
-                        {m.tournamentName || "Friendly"} {m.matchNumber ? `• M-${m.matchNumber}` : ""}
-                      </div>
-                      <div className="text-[10px] text-muted-foreground flex items-center gap-1 font-medium">
-                        <Calendar className="h-3 w-3" />
-                        {m.date ? `${m.date} ${m.time ? `• ${m.time}` : ""}` : "TBD"}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 flex-1">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-[10px] text-primary overflow-hidden">
-                          {m.team1?.logo ? <img src={m.team1?.logo} alt="" className="w-full h-full object-cover" /> : m.team1?.initials}
-                        </div>
-                        <span className="text-xs font-bold line-clamp-1">{m.team1?.name}</span>
-                      </div>
-                      <span className="text-[10px] font-black text-muted-foreground px-2">VS</span>
-                      <div className="flex items-center gap-2 flex-1 justify-end text-right">
-                        <span className="text-xs font-bold line-clamp-1">{m.team2?.name}</span>
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-[10px] text-primary overflow-hidden">
-                          {m.team2?.logo ? <img src={m.team2?.logo} alt="" className="w-full h-full object-cover" /> : m.team2?.initials}
-                        </div>
-                      </div>
-                    </div>
-                    {m.venue && (
-                      <div className="text-[10px] text-muted-foreground mt-2 text-center bg-background/50 rounded-sm py-1 font-medium">
-                        📍 {m.venue}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card className="bg-muted/10 border-border/50 border-dashed">
-              <CardContent className="p-6 text-center text-xs text-muted-foreground">
-                No upcoming fixtures scheduled.
-              </CardContent>
-            </Card>
-          )}
-        </div>
+        {/* REALTIME FEED (Live, Last, Upcoming, Notices) */}
+        <HomeRealtimeFeed 
+          initialLiveMatch={liveMatch} 
+          initialLastMatch={lastMatch}
+          initialUpcomingMatches={upcomingMatches}
+          initialNotices={latestNotices}
+        />
 
         {/* TEAMS MINI ROSTER */}
         <div className="space-y-3 pt-2">
@@ -233,43 +181,6 @@ export default async function HomePage() {
             <Card className="bg-muted/10 border-border/50 border-dashed">
               <CardContent className="p-6 text-center text-xs text-muted-foreground">
                 No teams registered yet.
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        {/* NOTICES MINI */}
-        <div className="space-y-3 pt-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <Bell className="h-4 w-4" /> Latest Notices
-            </h2>
-            <Link href="/notices" className="text-xs text-primary hover:underline flex items-center">
-              View All <ChevronRight className="h-3 w-3" />
-            </Link>
-          </div>
-          {latestNotices.length > 0 ? (
-            <div className="grid gap-2">
-              {latestNotices.map(n => (
-                <Link key={n.id} href="/notices">
-                  <Card className="hover:bg-muted/30 transition-colors border-border/50">
-                    <CardContent className="p-3">
-                      <div className="flex items-center gap-2">
-                        {n.isImportant && <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse-live" />}
-                        <div className="text-sm font-medium line-clamp-1">{n.title}</div>
-                      </div>
-                      <div className="text-[10px] text-muted-foreground mt-1">
-                        {n.createdAt ? new Date(n.createdAt).toLocaleDateString() : "Recent"}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <Card className="bg-muted/10 border-border/50 border-dashed">
-              <CardContent className="p-6 text-center text-xs text-muted-foreground">
-                No recent announcements.
               </CardContent>
             </Card>
           )}

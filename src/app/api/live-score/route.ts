@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { matches, teams, balls, tournaments } from "@/lib/db/schema";
+import { matches, teams, balls, tournaments, notices } from "@/lib/db/schema";
 import { eq, and, desc, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
@@ -103,8 +103,33 @@ export async function GET() {
       };
     }
 
-    return NextResponse.json({ liveMatch, lastMatch });
+    // 6. Fetch upcoming matches (top 3)
+    const upMatches = await db
+      .select()
+      .from(matches)
+      .where(inArray(matches.status, ["SCHEDULED", "TOSS"]))
+      .orderBy(matches.createdAt)
+      .limit(3);
+      
+    const allTeams = await db.select().from(teams);
+    const teamMap = new Map(allTeams.map(t => [t.id, t]));
+    
+    const upcomingMatches = upMatches.map(m => ({
+      ...m,
+      team1: teamMap.get(m.team1Id) || null,
+      team2: teamMap.get(m.team2Id) || null,
+      tournamentName: m.tournamentId ? allTournaments.find(t => t.id === m.tournamentId)?.name : null,
+    }));
+
+    // 7. Fetch latest notices (top 5)
+    const latestNotices = await db
+      .select()
+      .from(notices)
+      .orderBy(desc(notices.createdAt))
+      .limit(5);
+
+    return NextResponse.json({ liveMatch, lastMatch, upcomingMatches, notices: latestNotices });
   } catch (error) {
-    return NextResponse.json({ liveMatch: null, lastMatch: null, error: "Failed to fetch matches" }, { status: 500 });
+    return NextResponse.json({ liveMatch: null, lastMatch: null, upcomingMatches: [], notices: [], error: "Failed to fetch matches" }, { status: 500 });
   }
 }

@@ -6,9 +6,24 @@ import { Badge } from "@/components/ui/badge";
 import { Activity, MapPin, Trophy, Crown } from "lucide-react";
 import Link from "next/link";
 
-export function HomeMatchesUI({ initialLiveMatch, initialLastMatch }: { initialLiveMatch: any, initialLastMatch: any }) {
+import { Calendar, ChevronRight, Bell } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+
+export function HomeRealtimeFeed({ 
+  initialLiveMatch, 
+  initialLastMatch,
+  initialUpcomingMatches,
+  initialNotices
+}: { 
+  initialLiveMatch: any, 
+  initialLastMatch: any,
+  initialUpcomingMatches: any[],
+  initialNotices: any[]
+}) {
   const [liveMatch, setLiveMatch] = useState(initialLiveMatch);
   const [lastMatch, setLastMatch] = useState(initialLastMatch);
+  const [upcomingMatches, setUpcomingMatches] = useState(initialUpcomingMatches);
+  const [notices, setNotices] = useState(initialNotices);
 
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -17,12 +32,12 @@ export function HomeMatchesUI({ initialLiveMatch, initialLastMatch }: { initialL
         if (res.ok) {
           const data = await res.json();
           setLiveMatch(data.liveMatch);
-          if (data.lastMatch) {
-            setLastMatch(data.lastMatch);
-          }
+          if (data.lastMatch) setLastMatch(data.lastMatch);
+          if (data.upcomingMatches) setUpcomingMatches(data.upcomingMatches);
+          if (data.notices) setNotices(data.notices);
         }
       } catch (err) {
-        console.error("Failed to fetch matches", err);
+        console.error("Failed to fetch home feed", err);
       }
     }, 3000);
 
@@ -217,6 +232,103 @@ export function HomeMatchesUI({ initialLiveMatch, initialLastMatch }: { initialL
           <Card className="bg-muted/10 border-border/50 border-dashed">
             <CardContent className="p-6 text-center text-xs text-muted-foreground">
               No recent matches found.
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* UPCOMING MATCHES */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+            <Calendar className="h-4 w-4" /> Upcoming
+          </h2>
+          <Link href="/matches">
+            <div className="text-xs font-medium text-primary flex items-center hover:underline">
+              View All <ChevronRight className="h-3 w-3 ml-0.5" />
+            </div>
+          </Link>
+        </div>
+        {upcomingMatches.length > 0 ? (
+          <div className="space-y-2">
+            {upcomingMatches.map((m: any) => (
+              <Card key={m.id} className="bg-card/40 backdrop-blur-sm border-border/50 hover:bg-muted/20 transition-colors">
+                <CardContent className="p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-[10px] text-primary overflow-hidden">
+                        {m.team1?.logo ? <img src={m.team1?.logo} alt="" className="w-full h-full object-cover" /> : m.team1?.initials}
+                      </div>
+                      <div className="text-xs font-bold w-16 truncate">{m.team1?.name}</div>
+                    </div>
+                    <div className="flex flex-col items-center justify-center px-2 border-x border-border/50">
+                      <div className="text-[10px] font-bold text-muted-foreground uppercase">{m.tournamentName || "Normal"}</div>
+                      <div className="text-[10px] font-medium text-foreground mt-0.5" suppressHydrationWarning>
+                        {m.date || new Date(m.createdAt).toLocaleDateString()}
+                      </div>
+                      {m.time && <div className="text-[9px] text-muted-foreground mt-0.5">{m.time}</div>}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-xs font-bold w-16 truncate text-right">{m.team2?.name}</div>
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-[10px] text-primary overflow-hidden">
+                        {m.team2?.logo ? <img src={m.team2?.logo} alt="" className="w-full h-full object-cover" /> : m.team2?.initials}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card className="bg-muted/10 border-border/50 border-dashed">
+            <CardContent className="p-6 text-center text-xs text-muted-foreground">
+              No upcoming matches scheduled.
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* NOTICES */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+            <Bell className="h-4 w-4" /> Notices
+          </h2>
+          <Link href="/notices">
+            <div className="text-xs font-medium text-primary flex items-center hover:underline">
+              All Notices <ChevronRight className="h-3 w-3 ml-0.5" />
+            </div>
+          </Link>
+        </div>
+        {notices.length > 0 ? (
+          <div className="space-y-2">
+            {notices.map((n: any) => (
+              <Card key={n.id} className="bg-card/40 backdrop-blur-sm border-border/50">
+                <CardContent className="p-3">
+                  <div className="flex gap-3">
+                    <div className="shrink-0 mt-0.5">
+                      <div className={`w-2 h-2 rounded-full ${n.isImportant ? 'bg-red-500 animate-pulse' : 'bg-primary'}`} />
+                    </div>
+                    <div>
+                      <h3 className={`text-sm font-semibold ${n.isImportant ? 'text-red-400' : ''}`}>
+                        {n.title}
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+                        {n.content}
+                      </p>
+                      <div className="text-[10px] text-muted-foreground mt-2 font-medium" suppressHydrationWarning>
+                        {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card className="bg-muted/10 border-border/50 border-dashed">
+            <CardContent className="p-6 text-center text-xs text-muted-foreground">
+              No recent announcements.
             </CardContent>
           </Card>
         )}

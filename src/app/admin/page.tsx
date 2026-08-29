@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { finances, teams, tournaments, matches } from "@/lib/db/schema";
 import Link from "next/link";
-import { TrendingUp, Users, Trophy, Activity, FileText, Calendar, ChevronRight } from "lucide-react";
+import { TrendingUp, Users, Trophy, Activity, FileText, Calendar, ChevronRight, Bell } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -56,6 +56,7 @@ export default async function AdminDashboard() {
 
   const quickActions = [
     { href: "/admin/scorer", label: "Launch Live Scorer", icon: Activity, accent: true },
+    { href: "/admin/notices", label: "Notice Board", icon: Bell, accent: true },
     { href: "/admin/teams", label: "Manage Teams", icon: Users },
     { href: "/admin/matches", label: "Manage Matches", icon: Calendar },
     { href: "/admin/tournaments", label: "Manage Tournaments", icon: Trophy },
