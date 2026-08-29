@@ -36,7 +36,7 @@ export default function FinancePDFButtons({
   netBalance: number;
 }) {
   async function downloadOverallPDF() {
-    const { jsPDF } = await import("jspdf");
+    const jsPDF = (await import("jspdf")).default;
     const autoTable = (await import("jspdf-autotable")).default;
 
     const doc = new jsPDF();
@@ -91,7 +91,7 @@ export default function FinancePDFButtons({
   }
 
   async function downloadTournamentPDF(tournament: TournamentFinance) {
-    const { jsPDF } = await import("jspdf");
+    const jsPDF = (await import("jspdf")).default;
     const autoTable = (await import("jspdf-autotable")).default;
 
     const doc = new jsPDF();
