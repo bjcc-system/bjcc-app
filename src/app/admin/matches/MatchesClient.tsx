@@ -133,25 +133,23 @@ export default function MatchesClient({
                 </>
               )}
 
-              {/* Normal match fields */}
-              {matchType === "NORMAL" && (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Date</Label>
-                      <Input name="date" type="date" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Time</Label>
-                      <Input name="time" type="time" />
-                    </div>
+              {/* Schedule Details (Applicable to both) */}
+              <div className="space-y-3 pt-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Date</Label>
+                    <Input name="date" type="date" />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs">Venue</Label>
-                    <Input name="venue" placeholder="e.g. Beltala Ground" />
+                    <Label className="text-xs">Time</Label>
+                    <Input name="time" type="time" />
                   </div>
                 </div>
-              )}
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Venue</Label>
+                  <Input name="venue" placeholder="e.g. Beltala Ground" />
+                </div>
+              </div>
 
               {/* Team Selection */}
               <div className="grid grid-cols-2 gap-3">

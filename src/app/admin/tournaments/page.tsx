@@ -62,7 +62,9 @@ export default async function AdminTournaments() {
     "use server";
     const id = formData.get("id") as string;
     const currentStatus = formData.get("currentStatus") as string;
-    const newStatus = currentStatus === "SCHEDULED" ? "ONGOING" : "SCHEDULED";
+    const newStatus = 
+      currentStatus === "SCHEDULED" ? "ONGOING" : 
+      currentStatus === "ONGOING" ? "COMPLETED" : "SCHEDULED";
     await db.update(tournaments).set({ status: newStatus }).where(eq(tournaments.id, id));
     revalidatePath("/admin/tournaments");
   }
@@ -193,7 +195,7 @@ export default async function AdminTournaments() {
                                   }
                                   className={`text-[10px] cursor-pointer ${t.status === "ONGOING" ? "animate-pulse" : ""}`}
                                 >
-                                  {t.status === "ONGOING" ? "RUNNING" : t.status === "SCHEDULED" ? "UPCOMING" : t.status}
+                                  {t.status === "ONGOING" ? "RUNNING" : t.status === "SCHEDULED" ? "UPCOMING" : t.status === "COMPLETED" ? "FINISHED" : t.status}
                                 </Badge>
                               </button>
                             </form>

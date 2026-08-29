@@ -1,11 +1,11 @@
 import { db } from "@/lib/db";
-import { matches, teams, tournaments, notices, tournamentTeams } from "@/lib/db/schema";
+import { matches, teams, tournaments, notices, tournamentTeams, balls } from "@/lib/db/schema";
 import { desc, eq, ne, and } from "drizzle-orm";
 import Link from "next/link";
 import { BottomNav } from "@/components/BottomNav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Calendar, Bell, Shield, ChevronRight, Activity } from "lucide-react";
+import { Trophy, Calendar, Bell, Shield, ChevronRight, Activity, MapPin } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -53,9 +53,50 @@ export default async function HomePage() {
     tournamentName: m.tournamentId ? allTournaments.find(t => t.id === m.tournamentId)?.name : null
   }));
 
-  const liveMatch = enrichedMatches.find(m => ["LIVE", "TOSS", "INNINGS_BREAK"].includes(m.status));
+  const liveMatchRaw = enrichedMatches.find(m => ["LIVE", "TOSS", "INNINGS_BREAK"].includes(m.status));
+  let liveMatch = liveMatchRaw ? { ...liveMatchRaw, score: { totalRuns: 0, wickets: 0, oversStr: "0.0", crr: "0.00" } } : null;
+
+  if (liveMatch && liveMatch.status === "LIVE") {
+    const innings = liveMatch.currentInnings || 1;
+    const matchBalls = await db
+      .select()
+      .from(balls)
+      .where(and(eq(balls.matchId, liveMatch.id), eq(balls.innings, innings), eq(balls.isUndone, false)));
+    
+    let totalRuns = 0, wickets = 0, legalBalls = 0;
+    for (const b of matchBalls) {
+      totalRuns += b.runs + b.extras;
+      if (b.isWicket) wickets++;
+      if (b.extraType !== "WIDE" && b.extraType !== "NO_BALL") legalBalls++;
+    }
+    
+    const recentBalls = await db
+      .select()
+      .from(balls)
+      .where(and(eq(balls.matchId, liveMatch.id), eq(balls.innings, innings), eq(balls.isUndone, false)))
+      .orderBy(desc(balls.timestamp))
+      .limit(10);
+    
+    liveMatch.score = {
+      totalRuns,
+      wickets,
+      oversStr: `${Math.floor(legalBalls / 6)}.${legalBalls % 6}`,
+      crr: legalBalls > 0 ? ((totalRuns / legalBalls) * 6).toFixed(2) : "0.00",
+      recentBalls: recentBalls.reverse()
+    };
+  }
   const lastMatch = enrichedMatches.find(m => m.status === "COMPLETED");
-  const upcomingMatches = enrichedMatches.filter(m => m.status === "SCHEDULED").slice(0, 3);
+  const upcomingMatches = enrichedMatches
+    .filter(m => m.status === "SCHEDULED")
+    .sort((a, b) => {
+      if (!a.date && !b.date) return 0;
+      if (!a.date) return 1;
+      if (!b.date) return -1;
+      const dateA = new Date(`${a.date}T${a.time || "00:00"}`);
+      const dateB = new Date(`${b.date}T${b.time || "00:00"}`);
+      return dateA.getTime() - dateB.getTime();
+    })
+    .slice(0, 3);
 
   // 3. Fetch Notices
   const latestNotices = await db.select().from(notices).orderBy(desc(notices.createdAt)).limit(3);
@@ -89,33 +130,90 @@ export default async function HomePage() {
 
         {/* LIVE MATCH */}
         {liveMatch && (
-          <Card className="border-red-500/30 bg-red-500/5 glow-red overflow-hidden relative">
+          <Card className="border-red-500 bg-red-500/5 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 via-orange-500 to-red-500 animate-pulse"></div>
-            <CardContent className="p-5">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between mb-4">
-                <Badge variant="destructive" className="animate-pulse-live text-[10px] gap-1">
+                <Badge variant="destructive" className="animate-pulse-live text-[10px] gap-1 px-2 h-5">
                   <Activity className="h-3 w-3" /> LIVE
                 </Badge>
-                <div className="text-[10px] text-muted-foreground uppercase font-medium">
-                  {liveMatch.tournamentName || "Normal Match"}
+                <div className="text-[10px] text-muted-foreground uppercase font-medium bg-background/50 px-2 py-0.5 rounded-sm">
+                  {liveMatch.tournamentName || "Normal Match"} {liveMatch.matchNumber ? `• M-${liveMatch.matchNumber}` : ""}
                 </div>
               </div>
+              
               <div className="flex items-center justify-between">
-                <div className="text-center flex-1">
-                  <div className="text-sm font-bold truncate">{liveMatch.team1?.initials || liveMatch.team1?.name}</div>
+                <div className="flex flex-col items-center gap-1.5 flex-1">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary overflow-hidden">
+                    {liveMatch.team1?.logo ? <img src={liveMatch.team1?.logo} alt="" className="w-full h-full object-cover" /> : liveMatch.team1?.initials}
+                  </div>
+                  <div className="text-xs font-bold text-center line-clamp-1">{liveMatch.team1?.name}</div>
                 </div>
-                <div className="text-xs font-bold text-muted-foreground px-4">VS</div>
-                <div className="text-center flex-1">
-                  <div className="text-sm font-bold truncate">{liveMatch.team2?.initials || liveMatch.team2?.name}</div>
+                
+                <div className="flex flex-col items-center justify-center px-2 flex-1">
+                  {liveMatch.status === "LIVE" ? (
+                    <>
+                      <div className="text-3xl font-black tabular-nums tracking-tight">
+                        {liveMatch.score.totalRuns}<span className="text-xl text-muted-foreground">/{liveMatch.score.wickets}</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground font-medium mt-1">
+                        Overs: <span className="text-foreground">{liveMatch.score.oversStr}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-sm font-bold text-muted-foreground">VS</div>
+                  )}
+                </div>
+
+                <div className="flex flex-col items-center gap-1.5 flex-1">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary overflow-hidden">
+                    {liveMatch.team2?.logo ? <img src={liveMatch.team2?.logo} alt="" className="w-full h-full object-cover" /> : liveMatch.team2?.initials}
+                  </div>
+                  <div className="text-xs font-bold text-center line-clamp-1">{liveMatch.team2?.name}</div>
                 </div>
               </div>
-              <div className="mt-4 text-center">
-                <Link href="/matches">
-                  <Badge variant="secondary" className="hover:bg-primary/20 transition-colors">
-                    View Live Scorecard &rarr;
-                  </Badge>
-                </Link>
-              </div>
+
+              {liveMatch.status === "LIVE" && liveMatch.score.recentBalls && liveMatch.score.recentBalls.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-border/30">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Recent Balls</span>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">CRR: {liveMatch.score.crr}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                    {liveMatch.score.recentBalls.map((b: any) => {
+                      const isBoundary = b.runs === 4 || b.runs === 6;
+                      const isWicket = b.isWicket;
+                      const isExtra = b.extras > 0;
+                      
+                      let display = b.runs.toString();
+                      if (isWicket) display = "W";
+                      else if (b.extraType === "WIDE") display = `${b.extras}wd`;
+                      else if (b.extraType === "NO_BALL") display = `${b.runs}nb`;
+                      else if (b.runs === 0) display = "•";
+
+                      return (
+                        <div 
+                          key={b.id} 
+                          className={`min-w-[28px] h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0
+                            ${isWicket ? 'bg-red-500 text-white' : 
+                              isBoundary ? 'bg-emerald-500 text-white' : 
+                              isExtra ? 'bg-amber-500/20 text-amber-500' : 'bg-muted text-muted-foreground'}`}
+                        >
+                          {display}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {liveMatch.venue && (
+                <div className="mt-3 pt-3 border-t border-border/30 text-center">
+                  <div className="text-[10px] text-muted-foreground font-medium flex items-center justify-center gap-1">
+                    <MapPin className="h-3 w-3" /> {liveMatch.venue}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
@@ -168,20 +266,36 @@ export default async function HomePage() {
             <div className="grid gap-2">
               {upcomingMatches.map(m => (
                 <Card key={m.id} className="bg-muted/10 border-border/50">
-                  <CardContent className="p-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-[10px] text-primary">
-                        {m.team1?.initials}
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-sm uppercase tracking-wider">
+                        {m.tournamentName || "Friendly"} {m.matchNumber ? `• M-${m.matchNumber}` : ""}
                       </div>
-                      <span className="text-xs font-bold text-muted-foreground">v</span>
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-[10px] text-primary">
-                        {m.team2?.initials}
+                      <div className="text-[10px] text-muted-foreground flex items-center gap-1 font-medium">
+                        <Calendar className="h-3 w-3" />
+                        {m.date ? `${m.date} ${m.time ? `• ${m.time}` : ""}` : "TBD"}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-xs font-semibold">{m.date || "TBD"}</div>
-                      <div className="text-[10px] text-muted-foreground">{m.time || m.venue || "TBD"}</div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 flex-1">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-[10px] text-primary overflow-hidden">
+                          {m.team1?.logo ? <img src={m.team1?.logo} alt="" className="w-full h-full object-cover" /> : m.team1?.initials}
+                        </div>
+                        <span className="text-xs font-bold line-clamp-1">{m.team1?.name}</span>
+                      </div>
+                      <span className="text-[10px] font-black text-muted-foreground px-2">VS</span>
+                      <div className="flex items-center gap-2 flex-1 justify-end text-right">
+                        <span className="text-xs font-bold line-clamp-1">{m.team2?.name}</span>
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-[10px] text-primary overflow-hidden">
+                          {m.team2?.logo ? <img src={m.team2?.logo} alt="" className="w-full h-full object-cover" /> : m.team2?.initials}
+                        </div>
+                      </div>
                     </div>
+                    {m.venue && (
+                      <div className="text-[10px] text-muted-foreground mt-2 text-center bg-background/50 rounded-sm py-1 font-medium">
+                        📍 {m.venue}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))}
@@ -205,9 +319,9 @@ export default async function HomePage() {
               View All <ChevronRight className="h-3 w-3" />
             </Link>
           </div>
-          {allTeams.length > 0 ? (
+          {(currentTournamentTeams.length > 0 ? currentTournamentTeams : allTeams).length > 0 ? (
             <div className="flex gap-3 overflow-x-auto pb-2 snap-x">
-              {allTeams.slice(0, 7).map(t => (
+              {(currentTournamentTeams.length > 0 ? currentTournamentTeams : allTeams).map(t => (
                 <div key={t.id} className="snap-start shrink-0 flex flex-col items-center gap-1.5 w-16">
                   <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center font-bold text-primary overflow-hidden">
                     {t.logo ? <img src={t.logo} alt="" className="w-full h-full rounded-full object-cover" /> : t.initials}

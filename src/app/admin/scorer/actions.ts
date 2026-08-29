@@ -159,6 +159,16 @@ export async function redoLastBall(formData: FormData) {
   revalidatePath("/admin/scorer");
 }
 
+// Start toss phase
+export async function startToss(formData: FormData) {
+  const matchId = formData.get("matchId") as string;
+  await db
+    .update(matches)
+    .set({ status: "TOSS" })
+    .where(eq(matches.id, matchId));
+  revalidatePath("/admin/scorer");
+}
+
 // Set toss
 export async function setToss(formData: FormData) {
   const matchId = formData.get("matchId") as string;

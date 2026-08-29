@@ -19,6 +19,7 @@ import {
   recordBall,
   undoLastBall,
   redoLastBall,
+  startToss,
   setToss,
   endInnings,
   endMatch,
@@ -97,13 +98,9 @@ export default function ScorerClient({
                           {m.totalOvers} overs {m.stage ? `• ${m.stage}` : ""}
                         </div>
                       </div>
-                      <form action={setToss}>
+                      <form action={startToss}>
                         <input type="hidden" name="matchId" value={m.id} />
-                        <input type="hidden" name="team1Id" value={m.team1Id} />
-                        <input type="hidden" name="team2Id" value={m.team2Id} />
-                        <input type="hidden" name="tossWinnerId" value={m.team1Id} />
-                        <input type="hidden" name="tossDecision" value="BAT" />
-                        <Button size="sm" variant="outline" className="gap-1.5">
+                        <Button type="submit" size="sm" variant="outline" className="gap-1.5">
                           Start <ChevronRight className="h-3.5 w-3.5" />
                         </Button>
                       </form>
