@@ -14,12 +14,29 @@ const APP_DESCRIPTION =
   "Official App of Beltala Jr Cricket Council for Live Scores, Tournaments & Leaderboards.";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://bjcc.vercel.app"),
   applicationName: APP_NAME,
   title: {
     default: APP_DEFAULT_TITLE,
     template: APP_TITLE_TEMPLATE,
   },
   description: APP_DESCRIPTION,
+  keywords: [
+    "Beltala Jr Cricket Council",
+    "BJCC",
+    "BJCC Cricket",
+    "Beltala Cricket",
+    "BJCC live score",
+    "Beltala Junior Cricket",
+    "cricket tournament",
+    "local cricket league",
+    "cricket live scoring",
+    "cricket leaderboards",
+    "cricket stats"
+  ],
+  authors: [{ name: "Beltala Jr Cricket Council" }],
+  creator: "BJCC",
+  publisher: "Beltala Jr Cricket Council",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -37,14 +54,26 @@ export const metadata: Metadata = {
       template: APP_TITLE_TEMPLATE,
     },
     description: APP_DESCRIPTION,
+    locale: "en_IN",
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: {
       default: APP_DEFAULT_TITLE,
       template: APP_TITLE_TEMPLATE,
     },
     description: APP_DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 };
 
@@ -64,6 +93,21 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased relative min-h-screen`}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SportsOrganization",
+              "name": "Beltala Jr Cricket Council",
+              "alternateName": "BJCC",
+              "url": "https://bjcc.vercel.app",
+              "logo": "https://bjcc.vercel.app/window.svg",
+              "description": "Official App of Beltala Jr Cricket Council for Live Scores, Tournaments & Leaderboards.",
+              "sport": "Cricket"
+            })
+          }}
+        />
         {/* Global Stadium Background */}
         <div 
           className="fixed inset-0 z-[-1] pointer-events-none"

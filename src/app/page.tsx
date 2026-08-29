@@ -9,6 +9,14 @@ import { Trophy, Calendar, Bell, Shield, ChevronRight, Activity } from "lucide-r
 
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Beltala Jr Cricket Council | Live Score & Tournaments",
+  description: "Get real-time live scores, upcoming match fixtures, and tournament updates for Beltala Jr Cricket Council (BJCC).",
+  keywords: ["BJCC live score", "Beltala cricket live", "Beltala junior cricket", "local cricket tournament", "cricket scores"],
+};
+
 export default async function HomePage() {
   // 1. Fetch Current/Latest Tournament
   const allTournaments = await db.select().from(tournaments).orderBy(desc(tournaments.createdAt));

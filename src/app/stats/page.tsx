@@ -5,6 +5,14 @@ import StatsClient from "./StatsClient";
 
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Points Table & Team Rankings - BJCC",
+  description: "Check the latest team rankings, Net Run Rate (NRR), and points table for Beltala Jr Cricket Council tournaments.",
+  keywords: ["cricket points table", "cricket team rankings", "cricket NRR", "BJCC leaderboard", "cricket tournament standings"],
+};
+
 type TeamStat = {
   id: string;
   name: string;

@@ -5,6 +5,14 @@ import MatchesClient from "./MatchesClient";
 
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Live Scores & Match Fixtures - BJCC",
+  description: "Watch live ball-by-ball cricket scores and view recent match results and upcoming schedules in the Beltala Jr Cricket Council.",
+  keywords: ["cricket match live", "BJCC fixtures", "cricket scorecard", "live cricket score", "BJCC matches"],
+};
+
 export default async function MatchesPage() {
   const allMatches = await db.select().from(matches).orderBy(desc(matches.createdAt));
   const allTeams = await db.select().from(teams);
