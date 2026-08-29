@@ -46,7 +46,7 @@ export function LiveScorecard({ initialLiveMatch }: { initialLiveMatch: any }) {
     return () => clearInterval(interval);
   }, [liveMatch]);
 
-  if (!liveMatch || liveMatch.status !== "LIVE") return null;
+  if (!liveMatch || !["LIVE", "TOSS", "INNINGS_BREAK"].includes(liveMatch.status)) return null;
 
   return (
     <Card className="border-red-500 bg-red-500/5 relative overflow-hidden">
@@ -70,12 +70,39 @@ export function LiveScorecard({ initialLiveMatch }: { initialLiveMatch: any }) {
           </div>
           
           <div className="flex flex-col items-center justify-center px-2 flex-1">
-            <div className="text-3xl font-black tabular-nums tracking-tight">
-              {liveMatch.score?.totalRuns || 0}<span className="text-xl text-muted-foreground">/{liveMatch.score?.wickets || 0}</span>
-            </div>
-            <div className="text-xs text-muted-foreground font-medium mt-1">
-              Overs: <span className="text-foreground">{liveMatch.score?.oversStr || "0.0"}</span>
-            </div>
+            {liveMatch.status === "TOSS" ? (
+              <div className="text-xs font-bold text-muted-foreground uppercase text-center bg-background/50 px-3 py-2 rounded-md border border-border/50">
+                Toss Time
+              </div>
+            ) : liveMatch.status === "INNINGS_BREAK" ? (
+              <div className="text-xs font-bold text-amber-500 uppercase text-center bg-amber-500/10 px-3 py-2 rounded-md border border-amber-500/20">
+                Innings Break
+                {liveMatch.score?.target && (
+                  <div className="text-[10px] mt-1 font-bold text-foreground">
+                    Target: {liveMatch.score.target}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <div className="text-3xl font-black tabular-nums tracking-tight">
+                  {liveMatch.score?.totalRuns || 0}<span className="text-xl text-muted-foreground">/{liveMatch.score?.wickets || 0}</span>
+                </div>
+                <div className="text-xs text-muted-foreground font-medium mt-1">
+                  Overs: <span className="text-foreground">{liveMatch.score?.oversStr || "0.0"}</span>
+                </div>
+                {liveMatch.score?.target && (
+                  <div className="flex flex-col items-center mt-1">
+                    <div className="text-[10px] font-bold text-emerald-400">
+                      Target: {liveMatch.score.target}
+                    </div>
+                    <div className="text-[10px] font-bold text-yellow-400">
+                      Need {liveMatch.score.runsNeeded} in {liveMatch.score.ballsLeft} balls
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           <div className="flex flex-col items-center gap-1.5 flex-1">
@@ -93,7 +120,7 @@ export function LiveScorecard({ initialLiveMatch }: { initialLiveMatch: any }) {
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">CRR: {liveMatch.score.crr || "0.00"}</span>
             </div>
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-              {liveMatch.score.recentBalls.map((b: any) => {
+              {liveMatch.score.recentBalls.map((b: any, index: number, arr: any[]) => {
                 const isBoundary = b.runs === 4 || b.runs === 6;
                 const isWicket = b.isWicket;
                 const isExtra = b.extras > 0;
@@ -104,15 +131,26 @@ export function LiveScorecard({ initialLiveMatch }: { initialLiveMatch: any }) {
                 else if (b.extraType === "NO_BALL") display = `${b.runs}nb`;
                 else if (b.runs === 0) display = "•";
 
+                // Check if this ball ended an over (ballNumber 6 and legal), or if the previous ball was in a different over
+                let showDivider = false;
+                if (index > 0) {
+                  const prevBall = arr[index - 1];
+                  if (prevBall.overNumber !== b.overNumber) {
+                    showDivider = true;
+                  }
+                }
+
                 return (
-                  <div 
-                    key={b.id} 
-                    className={`min-w-[28px] h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0
-                      ${isWicket ? 'bg-red-500 text-white' : 
-                        isBoundary ? 'bg-emerald-500 text-white' : 
-                        isExtra ? 'bg-amber-500/20 text-amber-500' : 'bg-muted text-muted-foreground'}`}
-                  >
-                    {display}
+                  <div key={b.id} className="flex items-center gap-1.5 shrink-0">
+                    {showDivider && <div className="h-4 w-[1px] bg-border mx-0.5"></div>}
+                    <div 
+                      className={`min-w-[28px] h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0
+                        ${isWicket ? 'bg-red-500 text-white' : 
+                          isBoundary ? 'bg-emerald-500 text-white' : 
+                          isExtra ? 'bg-amber-500/20 text-amber-500' : 'bg-muted text-muted-foreground'}`}
+                    >
+                      {display}
+                    </div>
                   </div>
                 );
               })}

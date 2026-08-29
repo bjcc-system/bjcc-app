@@ -90,11 +90,44 @@ export async function recordBall(formData: FormData) {
     wicketType,
   });
 
-  // Update match status to LIVE if not already
-  await db
-    .update(matches)
-    .set({ status: "LIVE" })
-    .where(eq(matches.id, matchId));
+  // Check if we need to auto-end the innings or match
+  const mQuery = await db.select().from(matches).where(eq(matches.id, matchId)).limit(1);
+  const m = mQuery[0];
+  
+  if (m) {
+    const score = await calcScore(matchId, innings);
+    let shouldEndInnings = false;
+    let shouldEndMatch = false;
+
+    if (score.wickets >= 10 || score.legalBalls >= m.totalOvers * 6) {
+      if (innings === 1) shouldEndInnings = true;
+      else shouldEndMatch = true;
+    }
+
+    if (innings === 2) {
+      const score1 = await calcScore(matchId, 1);
+      if (score.totalRuns > score1.totalRuns) {
+        shouldEndMatch = true; // Target chased down
+      }
+    }
+
+    if (shouldEndMatch) {
+      // Need a FormData to pass to endMatch
+      const endFormData = new FormData();
+      endFormData.append("matchId", matchId);
+      await endMatch(endFormData);
+    } else if (shouldEndInnings) {
+      const endFormData = new FormData();
+      endFormData.append("matchId", matchId);
+      await endInnings(endFormData);
+    } else {
+      // Just update to LIVE
+      await db
+        .update(matches)
+        .set({ status: "LIVE" })
+        .where(eq(matches.id, matchId));
+    }
+  }
 
   // Sync to Redis
   await syncToRedis(matchId);

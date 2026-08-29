@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { matches, teams, balls, tournaments } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +13,7 @@ export async function GET() {
     const liveMatches = await db
       .select()
       .from(matches)
-      .where(eq(matches.status, "LIVE"))
+      .where(inArray(matches.status, ["LIVE", "TOSS", "INNINGS_BREAK"]))
       .limit(1);
 
     const m = liveMatches[0];
@@ -44,12 +44,32 @@ export async function GET() {
       .slice(0, 10)
       .reverse();
 
+    // 4. Calculate target if 2nd innings
+    let target = null;
+    let runsNeeded = null;
+    let ballsLeft = null;
+    
+    if (innings === 2) {
+      const firstInningsBalls = await db
+        .select()
+        .from(balls)
+        .where(and(eq(balls.matchId, m.id), eq(balls.innings, 1), eq(balls.isUndone, false)));
+      
+      const firstInningsScore = firstInningsBalls.reduce((sum, b) => sum + b.runs + b.extras, 0);
+      target = firstInningsScore + 1;
+      runsNeeded = target - totalRuns;
+      ballsLeft = (m.totalOvers * 6) - legalBalls;
+    }
+
     const score = {
       totalRuns,
       wickets,
       oversStr: `${Math.floor(legalBalls / 6)}.${legalBalls % 6}`,
       crr: legalBalls > 0 ? ((totalRuns / legalBalls) * 6).toFixed(2) : "0.00",
       recentBalls,
+      target,
+      runsNeeded,
+      ballsLeft
     };
 
     const tournamentName = m.tournamentId ? allTournaments.find(t => t.id === m.tournamentId)?.name : null;

@@ -78,13 +78,32 @@ export default async function HomePage() {
       .orderBy(desc(balls.timestamp))
       .limit(10);
     
+    let target: number | null = null;
+    let runsNeeded: number | null = null;
+    let ballsLeft: number | null = null;
+
+    if (innings === 2) {
+      const firstInningsBalls = await db
+        .select()
+        .from(balls)
+        .where(and(eq(balls.matchId, liveMatch.id), eq(balls.innings, 1), eq(balls.isUndone, false)));
+      
+      const firstInningsScore = firstInningsBalls.reduce((sum, b) => sum + b.runs + b.extras, 0);
+      target = firstInningsScore + 1;
+      runsNeeded = target - totalRuns;
+      ballsLeft = (liveMatch.totalOvers * 6) - legalBalls;
+    }
+
     liveMatch.score = {
       totalRuns,
       wickets,
       oversStr: `${Math.floor(legalBalls / 6)}.${legalBalls % 6}`,
       crr: legalBalls > 0 ? ((totalRuns / legalBalls) * 6).toFixed(2) : "0.00",
-      recentBalls: recentBalls.reverse()
-    };
+      recentBalls: recentBalls.reverse() as any[],
+      target,
+      runsNeeded,
+      ballsLeft,
+    } as any;
   }
   const lastMatch = enrichedMatches.find(m => m.status === "COMPLETED");
   const upcomingMatches = enrichedMatches
