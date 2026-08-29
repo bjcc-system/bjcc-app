@@ -37,7 +37,7 @@ export default async function ScorerPage() {
   );
 
   let matchBalls: any[] = [];
-  let score = { totalRuns: 0, wickets: 0, oversStr: "0.0", crr: "0.00", legalBalls: 0 };
+  let score: { totalRuns: number, wickets: number, oversStr: string, crr: string, legalBalls: number, recentBalls?: any[] } = { totalRuns: 0, wickets: 0, oversStr: "0.0", crr: "0.00", legalBalls: 0 };
 
   if (liveMatch) {
     const innings = liveMatch.currentInnings || 1;
