@@ -30,6 +30,9 @@ export default async function MatchesPage() {
     team2Initials: teamMap.get(m.team2Id)?.initials || "?",
     team2Logo: teamMap.get(m.team2Id)?.logo || null,
     tournamentName: m.tournamentId ? tournamentMap.get(m.tournamentId)?.name || null : null,
+    resultDesc: m.resultDesc?.startsWith("Won by")
+      ? `${m.winnerId === m.team1Id ? teamMap.get(m.team1Id)?.name : (m.winnerId === m.team2Id ? teamMap.get(m.team2Id)?.name : "")} ${m.resultDesc.toLowerCase()}`
+      : m.resultDesc,
   }));
 
   const recentMatches = enrichedMatches.filter(m => m.status === "COMPLETED" || m.status === "LIVE" || m.status === "INNINGS_BREAK" || m.status === "DELAYED");

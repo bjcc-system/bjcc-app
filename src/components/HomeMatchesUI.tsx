@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Activity, MapPin, Trophy } from "lucide-react";
+import { Activity, MapPin, Trophy, Crown } from "lucide-react";
 import Link from "next/link";
 
 export function HomeMatchesUI({ initialLiveMatch, initialLastMatch }: { initialLiveMatch: any, initialLastMatch: any }) {
@@ -167,20 +167,40 @@ export function HomeMatchesUI({ initialLiveMatch, initialLastMatch }: { initialL
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 flex-1">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-[10px] text-primary overflow-hidden">
-                    {lastMatch.team1?.logo ? <img src={lastMatch.team1?.logo} alt="" className="w-full h-full object-cover" /> : lastMatch.team1?.initials}
+                  <div className="relative w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-[10px] text-primary overflow-visible">
+                    {lastMatch.winnerId === lastMatch.team1Id && (
+                      <div className="absolute -top-5 flex justify-center w-full animate-bounce">
+                        <Crown className="h-4 w-4 text-yellow-500 drop-shadow-md fill-yellow-400" />
+                      </div>
+                    )}
+                    {lastMatch.winnerId === lastMatch.team1Id && (
+                      <div className="absolute inset-0 rounded-full animate-ping bg-yellow-400/20" style={{ animationDuration: '3s' }}></div>
+                    )}
+                    <div className="w-full h-full rounded-full overflow-hidden border border-border/50 relative z-10 bg-background flex items-center justify-center">
+                      {lastMatch.team1?.logo ? <img src={lastMatch.team1?.logo} alt="" className="w-full h-full object-cover" /> : lastMatch.team1?.initials}
+                    </div>
                   </div>
                   <span className="text-sm font-bold line-clamp-1">
-                    {lastMatch.team1?.name} {lastMatch.winnerId === lastMatch.team1Id && "🎊🎊🎊"}
+                    {lastMatch.team1?.name}
                   </span>
                 </div>
                 <div className="text-[10px] font-black text-muted-foreground px-2">VS</div>
                 <div className="flex items-center gap-2 flex-1 justify-end text-right">
                   <span className="text-sm font-bold line-clamp-1">
-                    {lastMatch.winnerId === lastMatch.team2Id && "🎊🎊🎊 "} {lastMatch.team2?.name}
+                    {lastMatch.team2?.name}
                   </span>
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-[10px] text-primary overflow-hidden">
-                    {lastMatch.team2?.logo ? <img src={lastMatch.team2?.logo} alt="" className="w-full h-full object-cover" /> : lastMatch.team2?.initials}
+                  <div className="relative w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-[10px] text-primary overflow-visible">
+                    {lastMatch.winnerId === lastMatch.team2Id && (
+                      <div className="absolute -top-5 flex justify-center w-full animate-bounce">
+                        <Crown className="h-4 w-4 text-yellow-500 drop-shadow-md fill-yellow-400" />
+                      </div>
+                    )}
+                    {lastMatch.winnerId === lastMatch.team2Id && (
+                      <div className="absolute inset-0 rounded-full animate-ping bg-yellow-400/20" style={{ animationDuration: '3s' }}></div>
+                    )}
+                    <div className="w-full h-full rounded-full overflow-hidden border border-border/50 relative z-10 bg-background flex items-center justify-center">
+                      {lastMatch.team2?.logo ? <img src={lastMatch.team2?.logo} alt="" className="w-full h-full object-cover" /> : lastMatch.team2?.initials}
+                    </div>
                   </div>
                 </div>
               </div>

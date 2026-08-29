@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, ChevronDown, ChevronUp, Trophy } from "lucide-react";
+import { Calendar, ChevronDown, ChevronUp, Trophy, Crown } from "lucide-react";
 import { BottomNav } from "@/components/BottomNav";
 import { getMatchBalls } from "./actions";
 
@@ -160,15 +160,35 @@ export default function MatchesClient({
 
                   <div className="flex items-center justify-between">
                     <div className="flex-1 flex flex-col items-center gap-2">
-                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary glow-blue overflow-hidden">
-                        {m.team1Logo ? <img src={m.team1Logo} alt={m.team1Initials} className="w-full h-full object-cover" /> : m.team1Initials}
+                      <div className="relative w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary glow-blue overflow-visible">
+                        {m.winnerId === m.team1Id && (
+                          <div className="absolute -top-5 flex justify-center w-full animate-bounce">
+                            <Crown className="h-5 w-5 text-yellow-500 drop-shadow-md fill-yellow-400" />
+                          </div>
+                        )}
+                        {m.winnerId === m.team1Id && (
+                          <div className="absolute inset-0 rounded-full animate-ping bg-yellow-400/20" style={{ animationDuration: '3s' }}></div>
+                        )}
+                        <div className="w-full h-full rounded-full overflow-hidden relative z-10 bg-background flex items-center justify-center">
+                          {m.team1Logo ? <img src={m.team1Logo} alt={m.team1Initials} className="w-full h-full object-cover" /> : m.team1Initials}
+                        </div>
                       </div>
                       <span className="text-xs font-semibold">{m.team1Name}</span>
                     </div>
                     <div className="px-4 text-xs font-bold text-muted-foreground">VS</div>
                     <div className="flex-1 flex flex-col items-center gap-2">
-                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary glow-blue overflow-hidden">
-                        {m.team2Logo ? <img src={m.team2Logo} alt={m.team2Initials} className="w-full h-full object-cover" /> : m.team2Initials}
+                      <div className="relative w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary glow-blue overflow-visible">
+                        {m.winnerId === m.team2Id && (
+                          <div className="absolute -top-5 flex justify-center w-full animate-bounce">
+                            <Crown className="h-5 w-5 text-yellow-500 drop-shadow-md fill-yellow-400" />
+                          </div>
+                        )}
+                        {m.winnerId === m.team2Id && (
+                          <div className="absolute inset-0 rounded-full animate-ping bg-yellow-400/20" style={{ animationDuration: '3s' }}></div>
+                        )}
+                        <div className="w-full h-full rounded-full overflow-hidden relative z-10 bg-background flex items-center justify-center">
+                          {m.team2Logo ? <img src={m.team2Logo} alt={m.team2Initials} className="w-full h-full object-cover" /> : m.team2Initials}
+                        </div>
                       </div>
                       <span className="text-xs font-semibold">{m.team2Name}</span>
                     </div>
