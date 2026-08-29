@@ -11,7 +11,6 @@ const navItems = [
   { href: "/matches", label: "Matches", icon: Calendar },
   { href: "/teams", label: "Teams", icon: Users },
   { href: "/stats", label: "Stats", icon: Trophy },
-  { href: "/notices", label: "Notices", icon: Bell, hasIndicator: true },
 ];
 
 export function BottomNav() {

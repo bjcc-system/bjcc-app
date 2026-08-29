@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Activity, MapPin, Trophy, Crown } from "lucide-react";
+import { Activity, MapPin, Trophy } from "lucide-react";
 import Link from "next/link";
 
 import { Calendar, ChevronRight, Bell } from "lucide-react";
@@ -13,28 +13,30 @@ export function HomeRealtimeFeed({
   initialLiveMatch, 
   initialLastMatch,
   initialUpcomingMatches,
-  initialNotices
+  initialRankings,
+  teamsSection
 }: { 
   initialLiveMatch: any, 
   initialLastMatch: any,
   initialUpcomingMatches: any[],
-  initialNotices: any[]
+  initialRankings: any[],
+  teamsSection: React.ReactNode
 }) {
   const [liveMatch, setLiveMatch] = useState(initialLiveMatch);
   const [lastMatch, setLastMatch] = useState(initialLastMatch);
   const [upcomingMatches, setUpcomingMatches] = useState(initialUpcomingMatches);
-  const [notices, setNotices] = useState(initialNotices);
+  const [rankings, setRankings] = useState(initialRankings);
 
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const res = await fetch("/api/live-score", { next: { revalidate: 0 } });
+        const res = await fetch("/api/live-score", { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
-          setLiveMatch(data.liveMatch);
+          if (data.liveMatch !== undefined) setLiveMatch(data.liveMatch);
           if (data.lastMatch) setLastMatch(data.lastMatch);
           if (data.upcomingMatches) setUpcomingMatches(data.upcomingMatches);
-          if (data.notices) setNotices(data.notices);
+          if (data.rankings) setRankings(data.rankings);
         }
       } catch (err) {
         console.error("Failed to fetch home feed", err);
@@ -184,11 +186,6 @@ export function HomeRealtimeFeed({
                 <div className="flex items-center gap-2 flex-1">
                   <div className="relative w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-[10px] text-primary overflow-visible">
                     {lastMatch.winnerId === lastMatch.team1Id && (
-                      <div className="absolute -top-5 flex justify-center w-full animate-bounce">
-                        <Crown className="h-4 w-4 text-yellow-500 drop-shadow-md fill-yellow-400" />
-                      </div>
-                    )}
-                    {lastMatch.winnerId === lastMatch.team1Id && (
                       <div className="absolute inset-0 rounded-full animate-ping bg-yellow-400/20" style={{ animationDuration: '3s' }}></div>
                     )}
                     <div className="w-full h-full rounded-full overflow-hidden border border-border/50 relative z-10 bg-background flex items-center justify-center">
@@ -205,11 +202,6 @@ export function HomeRealtimeFeed({
                     {lastMatch.team2?.name}
                   </span>
                   <div className="relative w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-[10px] text-primary overflow-visible">
-                    {lastMatch.winnerId === lastMatch.team2Id && (
-                      <div className="absolute -top-5 flex justify-center w-full animate-bounce">
-                        <Crown className="h-4 w-4 text-yellow-500 drop-shadow-md fill-yellow-400" />
-                      </div>
-                    )}
                     {lastMatch.winnerId === lastMatch.team2Id && (
                       <div className="absolute inset-0 rounded-full animate-ping bg-yellow-400/20" style={{ animationDuration: '3s' }}></div>
                     )}
@@ -250,31 +242,39 @@ export function HomeRealtimeFeed({
           </Link>
         </div>
         {upcomingMatches.length > 0 ? (
-          <div className="space-y-2">
+          <div className="grid gap-2">
             {upcomingMatches.map((m: any) => (
               <Card key={m.id} className="bg-card/40 backdrop-blur-sm border-border/50 hover:bg-muted/20 transition-colors">
                 <CardContent className="p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-sm uppercase tracking-wider">
+                      {m.tournamentName || "Friendly"} {m.matchNumber ? `• M-${m.matchNumber}` : ""}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground flex items-center gap-1 font-medium" suppressHydrationWarning>
+                      <Calendar className="h-3 w-3" />
+                      {m.date ? `${m.date} ${m.time ? `• ${m.time}` : ""}` : (m.createdAt ? new Date(m.createdAt).toLocaleDateString() : "TBD")}
+                    </div>
+                  </div>
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-1">
                       <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-[10px] text-primary overflow-hidden">
                         {m.team1?.logo ? <img src={m.team1?.logo} alt="" className="w-full h-full object-cover" /> : m.team1?.initials}
                       </div>
-                      <div className="text-xs font-bold w-16 truncate">{m.team1?.name}</div>
+                      <span className="text-xs font-bold line-clamp-1">{m.team1?.name}</span>
                     </div>
-                    <div className="flex flex-col items-center justify-center px-2 border-x border-border/50">
-                      <div className="text-[10px] font-bold text-muted-foreground uppercase">{m.tournamentName || "Normal"}</div>
-                      <div className="text-[10px] font-medium text-foreground mt-0.5" suppressHydrationWarning>
-                        {m.date || new Date(m.createdAt).toLocaleDateString()}
-                      </div>
-                      {m.time && <div className="text-[9px] text-muted-foreground mt-0.5">{m.time}</div>}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="text-xs font-bold w-16 truncate text-right">{m.team2?.name}</div>
+                    <span className="text-[10px] font-black text-muted-foreground px-2">VS</span>
+                    <div className="flex items-center gap-2 flex-1 justify-end text-right">
+                      <span className="text-xs font-bold line-clamp-1">{m.team2?.name}</span>
                       <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-[10px] text-primary overflow-hidden">
                         {m.team2?.logo ? <img src={m.team2?.logo} alt="" className="w-full h-full object-cover" /> : m.team2?.initials}
                       </div>
                     </div>
                   </div>
+                  {m.venue && (
+                    <div className="text-[10px] text-muted-foreground mt-2 text-center bg-background/50 rounded-sm py-1 font-medium">
+                      📍 {m.venue}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -288,47 +288,62 @@ export function HomeRealtimeFeed({
         )}
       </div>
 
-      {/* NOTICES */}
+      {teamsSection}
+
+      {/* RANKINGS */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-            <Bell className="h-4 w-4" /> Notices
+            <Trophy className="h-4 w-4" /> Top 5 Teams
           </h2>
-          <Link href="/notices">
+          <Link href="/stats">
             <div className="text-xs font-medium text-primary flex items-center hover:underline">
-              All Notices <ChevronRight className="h-3 w-3 ml-0.5" />
+              View All <ChevronRight className="h-3 w-3 ml-0.5" />
             </div>
           </Link>
         </div>
-        {notices.length > 0 ? (
-          <div className="space-y-2">
-            {notices.map((n: any) => (
-              <Card key={n.id} className="bg-card/40 backdrop-blur-sm border-border/50">
-                <CardContent className="p-3">
-                  <div className="flex gap-3">
-                    <div className="shrink-0 mt-0.5">
-                      <div className={`w-2 h-2 rounded-full ${n.isImportant ? 'bg-red-500 animate-pulse' : 'bg-primary'}`} />
-                    </div>
-                    <div>
-                      <h3 className={`text-sm font-semibold ${n.isImportant ? 'text-red-400' : ''}`}>
-                        {n.title}
-                      </h3>
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
-                        {n.content}
-                      </p>
-                      <div className="text-[10px] text-muted-foreground mt-2 font-medium" suppressHydrationWarning>
-                        {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+        {rankings.length > 0 ? (
+          <Card className="border-primary/20 bg-card/60 backdrop-blur-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="text-[10px] uppercase bg-muted/50 text-muted-foreground border-b border-border/50">
+                  <tr>
+                    <th className="px-3 py-2 font-semibold w-8 text-center">#</th>
+                    <th className="px-2 py-2 font-semibold">Team</th>
+                    <th className="px-2 py-2 font-semibold text-center">P</th>
+                    <th className="px-2 py-2 font-semibold text-center">W</th>
+                    <th className="px-2 py-2 font-semibold text-center">L</th>
+                    <th className="px-3 py-2 font-bold text-primary text-center">Pts</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  {rankings.map((team: any, index: number) => (
+                    <tr key={team.id} className="hover:bg-muted/20 transition-colors">
+                      <td className="px-3 py-2 text-center font-bold text-muted-foreground">{index + 1}</td>
+                      <td className="px-2 py-2 flex items-center gap-2 min-w-[120px]">
+                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center font-bold text-[8px] text-primary shrink-0 glow-blue">
+                          {team.logo ? (
+                            <img src={team.logo} alt={team.name} className="w-full h-full object-cover rounded-full" />
+                          ) : (
+                            team.initials || team.name.charAt(0)
+                          )}
+                        </div>
+                        <span className="font-semibold text-xs line-clamp-1">{team.name}</span>
+                      </td>
+                      <td className="px-2 py-2 text-center text-xs text-muted-foreground">{team.played}</td>
+                      <td className="px-2 py-2 text-center text-xs text-emerald-400 font-medium">{team.won}</td>
+                      <td className="px-2 py-2 text-center text-xs text-red-400 font-medium">{team.lost}</td>
+                      <td className="px-3 py-2 text-center text-xs font-bold text-primary">{team.points}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         ) : (
           <Card className="bg-muted/10 border-border/50 border-dashed">
             <CardContent className="p-6 text-center text-xs text-muted-foreground">
-              No recent announcements.
+              No stats available.
             </CardContent>
           </Card>
         )}

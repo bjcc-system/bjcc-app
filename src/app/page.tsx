@@ -118,8 +118,44 @@ export default async function HomePage() {
     })
     .slice(0, 3);
 
-  // 3. Fetch Notices
-  const latestNotices = await db.select().from(notices).orderBy(desc(notices.createdAt)).limit(3);
+  // 3. Calculate Rankings
+  const allCompletedMatches = await db.select().from(matches).where(eq(matches.status, "COMPLETED"));
+  const statsMap = new Map<string, { played: number; won: number; lost: number; points: number }>();
+  
+  for (const t of allTeams) {
+    statsMap.set(t.id, { played: 0, won: 0, lost: 0, points: 0 });
+  }
+
+  for (const m of allCompletedMatches) {
+    if (m.team1Id) {
+      const s = statsMap.get(m.team1Id);
+      if (s) s.played++;
+    }
+    if (m.team2Id) {
+      const s = statsMap.get(m.team2Id);
+      if (s) s.played++;
+    }
+    if (m.winnerId) {
+      const winner = statsMap.get(m.winnerId);
+      if (winner) {
+        winner.won++;
+        winner.points += 2;
+      }
+      const loserId = m.winnerId === m.team1Id ? m.team2Id : m.team1Id;
+      if (loserId) {
+        const loser = statsMap.get(loserId);
+        if (loser) loser.lost++;
+      }
+    }
+  }
+
+  const rankings = allTeams
+    .map(t => ({
+      ...t,
+      ...statsMap.get(t.id)
+    }))
+    .sort((a, b) => b.points! - a.points! || b.won! - a.won!)
+    .slice(0, 5);
 
   return (
     <div className="min-h-screen bg-transparent pb-20">
@@ -148,43 +184,43 @@ export default async function HomePage() {
           )}
         </div>
 
-        {/* REALTIME FEED (Live, Last, Upcoming, Notices) */}
+        {/* REALTIME FEED (Live, Last, Upcoming, Rankings) & TEAMS */}
         <HomeRealtimeFeed 
           initialLiveMatch={liveMatch} 
           initialLastMatch={lastMatch}
           initialUpcomingMatches={upcomingMatches}
-          initialNotices={latestNotices}
-        />
-
-        {/* TEAMS MINI ROSTER */}
-        <div className="space-y-3 pt-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <Shield className="h-4 w-4" /> Teams
-            </h2>
-            <Link href="/teams" className="text-xs text-primary hover:underline flex items-center">
-              View All <ChevronRight className="h-3 w-3" />
-            </Link>
-          </div>
-          {(currentTournamentTeams.length > 0 ? currentTournamentTeams : allTeams).length > 0 ? (
-            <div className="flex gap-3 overflow-x-auto pb-2 snap-x">
-              {(currentTournamentTeams.length > 0 ? currentTournamentTeams : allTeams).map(t => (
-                <div key={t.id} className="snap-start shrink-0 flex flex-col items-center gap-1.5 w-16">
-                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center font-bold text-primary overflow-hidden">
-                    {t.logo ? <img src={t.logo} alt="" className="w-full h-full rounded-full object-cover" /> : t.initials}
-                  </div>
-                  <div className="text-[9px] text-center font-medium truncate w-full">{t.name}</div>
+          initialRankings={rankings}
+          teamsSection={
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Shield className="h-4 w-4" /> Teams
+                </h2>
+                <Link href="/teams" className="text-xs text-primary hover:underline flex items-center">
+                  View All <ChevronRight className="h-3 w-3" />
+                </Link>
+              </div>
+              {(currentTournamentTeams.length > 0 ? currentTournamentTeams : allTeams).length > 0 ? (
+                <div className="flex gap-3 overflow-x-auto pb-2 snap-x">
+                  {(currentTournamentTeams.length > 0 ? currentTournamentTeams : allTeams).map(t => (
+                    <div key={t.id} className="snap-start shrink-0 flex flex-col items-center gap-1.5 w-16">
+                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center font-bold text-primary overflow-hidden">
+                        {t.logo ? <img src={t.logo} alt="" className="w-full h-full rounded-full object-cover" /> : t.initials}
+                      </div>
+                      <div className="text-[9px] text-center font-medium truncate w-full">{t.name}</div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <Card className="bg-muted/10 border-border/50 border-dashed">
+                  <CardContent className="p-6 text-center text-xs text-muted-foreground">
+                    No teams registered yet.
+                  </CardContent>
+                </Card>
+              )}
             </div>
-          ) : (
-            <Card className="bg-muted/10 border-border/50 border-dashed">
-              <CardContent className="p-6 text-center text-xs text-muted-foreground">
-                No teams registered yet.
-              </CardContent>
-            </Card>
-          )}
-        </div>
+          }
+        />
 
       </div>
       <BottomNav />

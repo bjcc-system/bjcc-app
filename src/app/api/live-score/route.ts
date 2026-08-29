@@ -121,15 +121,49 @@ export async function GET() {
       tournamentName: m.tournamentId ? allTournaments.find(t => t.id === m.tournamentId)?.name : null,
     }));
 
-    // 7. Fetch latest notices (top 5)
-    const latestNotices = await db
-      .select()
-      .from(notices)
-      .orderBy(desc(notices.createdAt))
-      .limit(5);
+    // 7. Calculate Top 5 Rankings (Based on matches won)
+    const allCompletedMatches = await db.select().from(matches).where(eq(matches.status, "COMPLETED"));
+    const statsMap = new Map<string, { played: number; won: number; lost: number; points: number }>();
+    
+    // Initialize stats
+    for (const t of allTeams) {
+      statsMap.set(t.id, { played: 0, won: 0, lost: 0, points: 0 });
+    }
 
-    return NextResponse.json({ liveMatch, lastMatch, upcomingMatches, notices: latestNotices });
+    for (const m of allCompletedMatches) {
+      if (m.team1Id) {
+        const s = statsMap.get(m.team1Id);
+        if (s) s.played++;
+      }
+      if (m.team2Id) {
+        const s = statsMap.get(m.team2Id);
+        if (s) s.played++;
+      }
+      if (m.winnerId) {
+        const winner = statsMap.get(m.winnerId);
+        if (winner) {
+          winner.won++;
+          winner.points += 2;
+        }
+        // Assuming team1 vs team2
+        const loserId = m.winnerId === m.team1Id ? m.team2Id : m.team1Id;
+        if (loserId) {
+          const loser = statsMap.get(loserId);
+          if (loser) loser.lost++;
+        }
+      }
+    }
+    
+    const rankings = allTeams
+      .map(t => ({
+        ...t,
+        ...statsMap.get(t.id)
+      }))
+      .sort((a, b) => b.points! - a.points! || b.won! - a.won!)
+      .slice(0, 5);
+
+    return NextResponse.json({ liveMatch, lastMatch, upcomingMatches, rankings });
   } catch (error) {
-    return NextResponse.json({ liveMatch: null, lastMatch: null, upcomingMatches: [], notices: [], error: "Failed to fetch matches" }, { status: 500 });
+    return NextResponse.json({ liveMatch: null, lastMatch: null, upcomingMatches: [], rankings: [], error: "Failed to fetch matches" }, { status: 500 });
   }
 }
