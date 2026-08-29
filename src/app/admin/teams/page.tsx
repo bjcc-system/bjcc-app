@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
+import { TeamForm } from "./TeamForm";
+
 export const dynamic = "force-dynamic";
 
 export default async function AdminTeams() {
@@ -60,27 +62,7 @@ export default async function AdminTeams() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <form action={addTeam} className="space-y-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="name" className="text-xs">Team Name</Label>
-                <Input id="name" name="name" placeholder="e.g. Bandhan XI" required />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="initials" className="text-xs">Initials</Label>
-                <Input id="initials" name="initials" placeholder="e.g. BXI" required />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="location" className="text-xs">Location</Label>
-                <Input id="location" name="location" placeholder="e.g. Beltala" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="logo" className="text-xs">Logo URL</Label>
-                <Input id="logo" name="logo" placeholder="https://..." />
-              </div>
-              <Button type="submit" className="w-full" size="sm">
-                Create Team
-              </Button>
-            </form>
+            <TeamForm addTeamAction={addTeam} />
           </CardContent>
         </Card>
 
@@ -94,8 +76,8 @@ export default async function AdminTeams() {
               {allTeams.map((t) => (
                 <Card key={t.id} className="group relative">
                   <CardContent className="pt-4 pb-3 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shrink-0">
-                      {t.initials || t.name.charAt(0)}
+                    <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden glow-blue">
+                      {t.logo ? <img src={t.logo} alt={t.initials} className="w-full h-full object-cover" /> : (t.initials || t.name.charAt(0))}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="font-semibold text-sm truncate">{t.name}</div>

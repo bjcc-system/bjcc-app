@@ -25,8 +25,10 @@ export default async function MatchesPage() {
     ...m,
     team1Name: teamMap.get(m.team1Id)?.name || "Unknown",
     team1Initials: teamMap.get(m.team1Id)?.initials || "?",
+    team1Logo: teamMap.get(m.team1Id)?.logo || null,
     team2Name: teamMap.get(m.team2Id)?.name || "Unknown",
     team2Initials: teamMap.get(m.team2Id)?.initials || "?",
+    team2Logo: teamMap.get(m.team2Id)?.logo || null,
     tournamentName: m.tournamentId ? tournamentMap.get(m.tournamentId)?.name || null : null,
   }));
 

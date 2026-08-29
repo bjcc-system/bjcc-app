@@ -165,7 +165,7 @@ export default function MatchesClient({
                     <option value="">Select</option>
                     {availableTeams.map((t) => (
                       <option key={t.id} value={t.id}>
-                        {t.initials || t.name}
+                        {t.name}
                       </option>
                     ))}
                   </select>
@@ -180,7 +180,7 @@ export default function MatchesClient({
                     <option value="">Select</option>
                     {availableTeams.map((t) => (
                       <option key={t.id} value={t.id}>
-                        {t.initials || t.name}
+                        {t.name}
                       </option>
                     ))}
                   </select>

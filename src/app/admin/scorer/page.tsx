@@ -25,8 +25,10 @@ export default async function ScorerPage() {
     ...m,
     team1Name: teamMap.get(m.team1Id)?.name || "Team 1",
     team1Initials: teamMap.get(m.team1Id)?.initials || "T1",
+    team1Logo: teamMap.get(m.team1Id)?.logo || null,
     team2Name: teamMap.get(m.team2Id)?.name || "Team 2",
     team2Initials: teamMap.get(m.team2Id)?.initials || "T2",
+    team2Logo: teamMap.get(m.team2Id)?.logo || null,
   }));
 
   // If there's a LIVE or TOSS match, get its balls

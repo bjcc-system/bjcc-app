@@ -32,8 +32,10 @@ type MatchData = {
   team2Id: string;
   team1Name: string;
   team1Initials: string;
+  team1Logo: string | null;
   team2Name: string;
   team2Initials: string;
+  team2Logo: string | null;
   status: string;
   tossWinnerId: string | null;
   tossDecision: string | null;

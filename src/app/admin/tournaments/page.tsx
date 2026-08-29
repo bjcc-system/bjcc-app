@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { tournaments, tournamentTeams, teams } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { Trophy, Plus, Trash2, MapPin, CalendarDays } from "lucide-react";
+import { Trophy, Plus, Trash2, MapPin, CalendarDays, Pencil } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,6 +58,15 @@ export default async function AdminTournaments() {
     revalidatePath("/admin/tournaments");
   }
 
+  async function toggleStatus(formData: FormData) {
+    "use server";
+    const id = formData.get("id") as string;
+    const currentStatus = formData.get("currentStatus") as string;
+    const newStatus = currentStatus === "SCHEDULED" ? "ONGOING" : "SCHEDULED";
+    await db.update(tournaments).set({ status: newStatus }).where(eq(tournaments.id, id));
+    revalidatePath("/admin/tournaments");
+  }
+
   return (
     <div className="p-4 md:p-6 pb-20 md:pb-6 max-w-5xl mx-auto space-y-6">
       <div>
@@ -97,8 +106,9 @@ export default async function AdminTournaments() {
                     name="type"
                     className="flex h-8 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   >
-                    <option value="SHORT">Short</option>
-                    <option value="LONG">Long</option>
+                    <option value="Short Pitch">Short Pitch</option>
+                    <option value="Short to Long">Short to Long</option>
+                    <option value="Long to Long">Long to Long</option>
                   </select>
                 </div>
               </div>
@@ -169,18 +179,24 @@ export default async function AdminTournaments() {
                         <div className="space-y-1.5">
                           <div className="flex items-center gap-2">
                             <h3 className="font-semibold text-sm">{t.name}</h3>
-                            <Badge
-                              variant={
-                                t.status === "ONGOING"
-                                  ? "default"
-                                  : t.status === "COMPLETED"
-                                  ? "secondary"
-                                  : "outline"
-                              }
-                              className="text-[10px]"
-                            >
-                              {t.status}
-                            </Badge>
+                            <form action={toggleStatus}>
+                              <input type="hidden" name="id" value={t.id} />
+                              <input type="hidden" name="currentStatus" value={t.status || "SCHEDULED"} />
+                              <button type="submit" className="transition-transform hover:scale-105 active:scale-95">
+                                <Badge
+                                  variant={
+                                    t.status === "ONGOING"
+                                      ? "default"
+                                      : t.status === "COMPLETED"
+                                      ? "secondary"
+                                      : "outline"
+                                  }
+                                  className={`text-[10px] cursor-pointer ${t.status === "ONGOING" ? "animate-pulse" : ""}`}
+                                >
+                                  {t.status === "ONGOING" ? "RUNNING" : t.status === "SCHEDULED" ? "UPCOMING" : t.status}
+                                </Badge>
+                              </button>
+                            </form>
                             <Badge variant="outline" className="text-[10px]">
                               {t.type}
                             </Badge>
@@ -213,17 +229,26 @@ export default async function AdminTournaments() {
                             </div>
                           )}
                         </div>
-                        <form action={deleteTournament}>
-                          <input type="hidden" name="id" value={t.id} />
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Button
-                            type="submit"
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                            className="h-7 w-7 text-muted-foreground hover:text-primary"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Pencil className="h-3.5 w-3.5" />
                           </Button>
-                        </form>
+                          <form action={deleteTournament}>
+                            <input type="hidden" name="id" value={t.id} />
+                            <Button
+                              type="submit"
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </form>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>

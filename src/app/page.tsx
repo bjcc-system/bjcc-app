@@ -28,12 +28,21 @@ export default async function HomePage() {
     const teamIds = ttMaps.map(tt => tt.teamId);
     if (teamIds.length > 0) {
       const t = await db.select().from(teams);
-      currentTournamentTeams = t.filter(team => teamIds.includes(team.id));
+      const filtered = t.filter(team => teamIds.includes(team.id));
+      currentTournamentTeams = filtered
+        .map(value => ({ value, sort: Math.random() }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ value }) => value);
     }
   }
 
-  const allTeams = await db.select().from(teams);
-  const teamMap = new Map(allTeams.map(t => [t.id, t]));
+  const allTeamsQuery = await db.select().from(teams);
+  const allTeams = allTeamsQuery
+    .map(value => ({ value, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ value }) => value);
+
+  const teamMap = new Map(allTeamsQuery.map(t => [t.id, t]));
 
   // 2. Fetch Matches
   const allMatches = await db.select().from(matches).orderBy(desc(matches.createdAt));
@@ -198,9 +207,9 @@ export default async function HomePage() {
           </div>
           {allTeams.length > 0 ? (
             <div className="flex gap-3 overflow-x-auto pb-2 snap-x">
-              {allTeams.slice(0, 5).map(t => (
+              {allTeams.slice(0, 7).map(t => (
                 <div key={t.id} className="snap-start shrink-0 flex flex-col items-center gap-1.5 w-16">
-                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center font-bold text-primary">
+                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center font-bold text-primary overflow-hidden">
                     {t.logo ? <img src={t.logo} alt="" className="w-full h-full rounded-full object-cover" /> : t.initials}
                   </div>
                   <div className="text-[9px] text-center font-medium truncate w-full">{t.name}</div>

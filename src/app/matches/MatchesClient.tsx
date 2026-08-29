@@ -11,8 +11,10 @@ type Match = {
   id: string;
   team1Name: string;
   team1Initials: string;
+  team1Logo: string | null;
   team2Name: string;
   team2Initials: string;
+  team2Logo: string | null;
   tournamentName: string | null;
   status: string;
   matchType: string;
@@ -158,15 +160,15 @@ export default function MatchesClient({
 
                   <div className="flex items-center justify-between">
                     <div className="flex-1 flex flex-col items-center gap-2">
-                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary glow-blue">
-                        {m.team1Initials}
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary glow-blue overflow-hidden">
+                        {m.team1Logo ? <img src={m.team1Logo} alt={m.team1Initials} className="w-full h-full object-cover" /> : m.team1Initials}
                       </div>
                       <span className="text-xs font-semibold">{m.team1Name}</span>
                     </div>
                     <div className="px-4 text-xs font-bold text-muted-foreground">VS</div>
                     <div className="flex-1 flex flex-col items-center gap-2">
-                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary glow-blue">
-                        {m.team2Initials}
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary glow-blue overflow-hidden">
+                        {m.team2Logo ? <img src={m.team2Logo} alt={m.team2Initials} className="w-full h-full object-cover" /> : m.team2Initials}
                       </div>
                       <span className="text-xs font-semibold">{m.team2Name}</span>
                     </div>
